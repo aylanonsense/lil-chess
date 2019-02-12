@@ -8,6 +8,7 @@ local NUM_COLS = 8
 local NUM_ROWS = 10
 
 -- Game vars
+local animTimer
 local mouseCol
 local mouseRow
 local possibleMoves
@@ -27,8 +28,11 @@ local captureSound
 
 -- Initializes the game
 function love.load()
+  -- Initialize game vars
+  animTimer = 0.00
+
   -- Load images
-  chessPiecesImage = loadImage('img/chess-pieces.png')
+  chessPiecesImage = loadImage('img/chess-pieces-2.png')
 
   -- Load sound effects
   selectSound = love.audio.newSource('sfx/select.wav', 'static')
@@ -48,6 +52,9 @@ end
 
 -- Updates the game state
 function love.update(dt)
+  -- Make the pieces bounce up and down
+  animTimer = (animTimer + dt) % 1.00
+
   -- Figure out the currently highlighted tile
   local mouseX = love.mouse.getX() / RENDER_SCALE
   local mouseY = love.mouse.getY() / RENDER_SCALE
@@ -111,8 +118,13 @@ function love.draw()
     elseif piece.type == 'bishop' then
       spriteNum = 4
     end
-    if piece.playerNum == 2 then
+    if animTimer < 0.50 then
       spriteNum = spriteNum + 6
+    end
+    if piece.playerNum == 1 then
+      love.graphics.setColor(1.00, 0.85, 0.10, 1)
+    else
+      love.graphics.setColor(1.00, 0.15, 0.50, 1)
     end
     if not piece.hasBeenCaptured then
       drawSprite(chessPiecesImage, spriteNum, 23, 40, false, TILE_WIDTH * (piece.col - 0.5) - 11, TILE_HEIGHT * (piece.row - 0.5) - 35)
