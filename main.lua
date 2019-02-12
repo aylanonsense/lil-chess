@@ -32,7 +32,7 @@ function love.load()
   animTimer = 0.00
 
   -- Load images
-  chessPiecesImage = loadImage('img/chess-pieces-2.png')
+  chessPiecesImage = loadImage('img/chess-pieces.png')
 
   -- Load sound effects
   selectSound = love.audio.newSource('sfx/select.wav', 'static')
