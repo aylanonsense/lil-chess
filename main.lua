@@ -20,7 +20,10 @@ local pieces
 local chessPiecesImage
 
 -- Sound effects
--- ...
+local selectSound
+local deselectSound
+local moveSound
+local captureSound
 
 -- Initializes the game
 function love.load()
@@ -28,7 +31,10 @@ function love.load()
   chessPiecesImage = loadImage('img/chess-pieces.png')
 
   -- Load sound effects
-  -- ...
+  selectSound = love.audio.newSource('sfx/select.wav', 'static')
+  deselectSound = love.audio.newSource('sfx/deselect.wav', 'static')
+  moveSound = love.audio.newSource('sfx/move.wav', 'static')
+  captureSound = love.audio.newSource('sfx/capture.wav', 'static')
 
   -- Create the game objects
   pieces = {}
@@ -47,6 +53,11 @@ function love.update(dt)
   local mouseY = love.mouse.getY() / RENDER_SCALE
   mouseCol = math.floor(1 + mouseX / TILE_WIDTH)
   mouseRow = math.floor(1 + mouseY / TILE_HEIGHT)
+
+  -- Sort pieces for drawing
+  table.sort(pieces, function(a, b)
+    return a.row < b.row
+  end)
 end
 
 -- Renders the game
@@ -66,6 +77,14 @@ function love.draw()
       if (col + row) % 2 == 0 then
         love.graphics.rectangle('fill', TILE_WIDTH * (col - 1), TILE_HEIGHT * (row - 1), TILE_WIDTH, TILE_HEIGHT)
       end
+    end
+  end
+
+  -- Draw the shadows
+  love.graphics.setColor(13 / 255, 17 / 255, 164 / 255, 1)
+  for _, piece in ipairs(pieces) do
+    if not piece.hasBeenCaptured then
+      love.graphics.rectangle('fill', TILE_WIDTH * (piece.col - 1), TILE_HEIGHT * (piece.row - 1) + 5, TILE_WIDTH / 2, 10)
     end
   end
 
@@ -109,10 +128,15 @@ function love.mousepressed()
       local otherPiece = getChessPieceAtTile(mouseCol, mouseRow)
       if otherPiece then
         otherPiece.hasBeenCaptured = true
+        love.audio.play(captureSound:clone())
+      else
+        love.audio.play(moveSound:clone())
       end
       -- Move the selected piece
       selectedPiece.col = mouseCol
       selectedPiece.row = mouseRow
+    else
+      love.audio.play(deselectSound:clone())
     end
     -- Deselect the selected piece
     selectedPiece = nil
@@ -122,6 +146,7 @@ function love.mousepressed()
     selectedPiece = getChessPieceAtTile(mouseCol, mouseRow)
     if selectedPiece then
       possibleMoves = calculatePossibleMovies(selectedPiece)
+      love.audio.play(selectSound:clone())
     end
   end
 end
