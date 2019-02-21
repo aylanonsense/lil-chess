@@ -1,2 +1,2 @@
 # lil-chess
-A little game of chess.
+A lil game of chess.

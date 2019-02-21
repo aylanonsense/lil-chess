@@ -1,0 +1,6 @@
+---
+main: main.lua
+name: lil chess
+username: bridgs
+primaryColor: C0C0C0
+description: A lil game of chess.
