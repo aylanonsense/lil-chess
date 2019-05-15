@@ -1,26 +1,21 @@
--- Constants
-local GAME_WIDTH = 200
-local GAME_HEIGHT = 200
-local RENDER_SCALE = 3
+-- Game constants
+local GAME_WIDTH = 192
+local GAME_HEIGHT = 192
 local TILE_WIDTH = 25
 local TILE_HEIGHT = 20
 local NUM_COLS = 8
 local NUM_ROWS = 10
 
--- Game vars
+-- Game variables
 local animTimer
 local mouseCol
 local mouseRow
 local possibleMoves
-
--- Game objects
 local selectedPiece
 local pieces
 
--- Images
+-- Assets
 local chessPiecesImage
-
--- Sound effects
 local selectSound
 local deselectSound
 local moveSound
@@ -28,13 +23,14 @@ local captureSound
 
 -- Initializes the game
 function love.load()
+  -- Set filters
+  love.graphics.setDefaultFilter('nearest', 'nearest')
+
   -- Initialize game vars
   animTimer = 0.00
 
-  -- Load images
-  chessPiecesImage = loadImage('img/chess-pieces.png')
-
-  -- Load sound effects
+  -- Load assets
+  chessPiecesImage = love.graphics.newImage('img/chess-pieces.png')
   selectSound = love.audio.newSource('sfx/select.wav', 'static')
   deselectSound = love.audio.newSource('sfx/deselect.wav', 'static')
   moveSound = love.audio.newSource('sfx/move.wav', 'static')
@@ -56,10 +52,8 @@ function love.update(dt)
   animTimer = (animTimer + dt) % 1.00
 
   -- Figure out the currently highlighted tile
-  local mouseX = love.mouse.getX() / RENDER_SCALE
-  local mouseY = love.mouse.getY() / RENDER_SCALE
-  mouseCol = math.floor(1 + mouseX / TILE_WIDTH)
-  mouseRow = math.floor(1 + mouseY / TILE_HEIGHT)
+  mouseCol = math.floor(1 + love.mouse.getX() / TILE_WIDTH)
+  mouseRow = math.floor(1 + love.mouse.getY() / TILE_HEIGHT)
 
   -- Sort pieces for drawing
   table.sort(pieces, function(a, b)
@@ -69,16 +63,11 @@ end
 
 -- Renders the game
 function love.draw()
-  -- Set some drawing filters
-  love.graphics.setDefaultFilter('nearest', 'nearest')
-  love.graphics.scale(RENDER_SCALE, RENDER_SCALE)
-
   -- Clear the screen
-  love.graphics.setColor(13 / 255, 17 / 255, 164 / 255, 1)
-  love.graphics.rectangle('fill', 0, 0, GAME_WIDTH, GAME_HEIGHT)
+  love.graphics.clear(200 / 255, 95 / 255, 15 / 255)
 
   -- Draw checkered tiles
-  love.graphics.setColor(3 / 255, 86 / 255, 222 / 255, 1)
+  love.graphics.setColor(211 / 255, 158 / 255, 59 / 255)
   for col = 1, NUM_COLS do
     for row = 1, NUM_ROWS do
       if (col + row) % 2 == 0 then
@@ -88,7 +77,7 @@ function love.draw()
   end
 
   -- Draw the shadows
-  love.graphics.setColor(13 / 255, 17 / 255, 164 / 255, 1)
+  love.graphics.setColor(200 / 255, 95 / 255, 15 / 255)
   for _, piece in ipairs(pieces) do
     if not piece.hasBeenCaptured then
       love.graphics.rectangle('fill', TILE_WIDTH * (piece.col - 1), TILE_HEIGHT * (piece.row - 1) + 5, TILE_WIDTH / 2, 10)
@@ -96,8 +85,8 @@ function love.draw()
   end
 
   -- Draw a highlight around the selected piece and all of its possible moves
+  love.graphics.setColor(254 / 255, 253 / 255, 56 / 255)
   if selectedPiece then
-    love.graphics.setColor(1, 1, 1, 1)
     highlightTile(selectedPiece.col, selectedPiece.row)
     for _, tile in ipairs(possibleMoves) do
       highlightTile(tile.col, tile.row)
@@ -105,29 +94,27 @@ function love.draw()
   end
 
   -- Draw a hightlight around the mouse
-  love.graphics.setColor(1, 1, 1, 1)
   highlightTile(mouseCol, mouseRow)
 
   -- Draw the chess pieces
+  love.graphics.setColor(1, 1, 1)
   for _, piece in ipairs(pieces) do
-    local spriteNum
+    local sprite
     if piece.type == 'knight' then
-      spriteNum = 2
+      sprite = 2
     elseif piece.type == 'rook' then
-      spriteNum = 3
+      sprite = 3
     elseif piece.type == 'bishop' then
-      spriteNum = 4
+      sprite = 4
     end
     if animTimer < 0.50 then
-      spriteNum = spriteNum + 6
+      sprite = sprite + 6
     end
-    if piece.playerNum == 1 then
-      love.graphics.setColor(1.00, 0.85, 0.10, 1)
-    else
-      love.graphics.setColor(1.00, 0.15, 0.50, 1)
+    if piece.playerNum == 2 then
+      sprite = sprite + 12
     end
     if not piece.hasBeenCaptured then
-      drawSprite(chessPiecesImage, spriteNum, 23, 40, false, TILE_WIDTH * (piece.col - 0.5) - 11, TILE_HEIGHT * (piece.row - 0.5) - 35)
+      drawSprite(chessPiecesImage, 23, 40, sprite, TILE_WIDTH * (piece.col - 0.5) - 11, TILE_HEIGHT * (piece.row - 0.5) - 35)
     end
   end
 end
@@ -299,18 +286,15 @@ function isInBounds(col, row)
   return 1 <= col and col <= NUM_COLS and 1 <= row and row <= NUM_ROWS
 end
 
--- Loads a pixelated image
-function loadImage(filePath)
-  local image = love.graphics.newImage(filePath)
-  image:setFilter('nearest', 'nearest')
-  return image
-end
-
--- Draws a sprite from a sprite sheet image, spriteNum=1 is the upper-leftmost sprite
-function drawSprite(image, spriteNum, spriteWidth, spriteHeight, flipHorizontally, x, y)
-  local columns = math.floor(image:getWidth() / spriteWidth)
-  local col = (spriteNum - 1) % columns
-  local row = math.floor((spriteNum - 1) / columns)
-  local quad = love.graphics.newQuad(spriteWidth * col, spriteHeight * row, spriteWidth, spriteHeight, image:getDimensions())
-  love.graphics.draw(image, quad, x + (flipHorizontally and spriteWidth or 0), y, 0, flipHorizontally and -1 or 1, 1)
+-- Draws a sprite from a sprite sheet, spriteNum=1 is the upper-leftmost sprite
+function drawSprite(spriteSheetImage, spriteWidth, spriteHeight, sprite, x, y, flipHorizontal, flipVertical, rotation)
+  local width, height = spriteSheetImage:getDimensions()
+  local numColumns = math.floor(width / spriteWidth)
+  local col, row = (sprite - 1) % numColumns, math.floor((sprite - 1) / numColumns)
+  love.graphics.draw(spriteSheetImage,
+    love.graphics.newQuad(spriteWidth * col, spriteHeight * row, spriteWidth, spriteHeight, width, height),
+    x + spriteWidth / 2, y + spriteHeight / 2,
+    rotation or 0,
+    flipHorizontal and -1 or 1, flipVertical and -1 or 1,
+    spriteWidth / 2, spriteHeight / 2)
 end
