@@ -4,6 +4,6 @@ name: lil chess
 username: bridgs
 primaryColor: C85F0F
 coverImage: cover-image.png
-description: A lil game of chess.
+description: A nice starting point for anyone looking to make a grid-based game, be it a board game or a tactics game.
 dimensions: 192x192
 scaling: step
